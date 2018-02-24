@@ -5,11 +5,22 @@
 int main()
 {
     printf("%s", "Welcome to MatrixTD\n");
-
+    
     struct MatrixTD *game = MatrixTD_create();
+    
+    if (game == NULL)
+    {
+	printf(":(((\n");
+	return 1;
+    }
+		
+    while(MatrixTD_isOpen(game)) // This is if I get it to work with threading
+    {
+	SDL_Delay(100);
+	printf(".");
+    }
 
-    while(MatrixTD_isOpen(game))
-	;
-
+    MatrixTD_destroy(game);
+    
     return 0;
 }
