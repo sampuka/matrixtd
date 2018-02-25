@@ -23,6 +23,8 @@ void MatrixTD_destroy(struct MatrixTD *game);
 
 void* MatrixTD_mainloop(void *game);
 
+void MatrixTD_draw(struct MatrixTD *game);
+
 uint8_t MatrixTD_isOpen(struct MatrixTD *game);
 
 #endif

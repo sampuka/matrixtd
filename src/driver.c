@@ -4,7 +4,7 @@
 
 int main()
 {
-    printf("%s", "Welcome to MatrixTD\n");
+    printf("Welcome to MatrixTD\n");
     
     struct MatrixTD *game = MatrixTD_create();
     

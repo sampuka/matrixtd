@@ -88,15 +88,11 @@ void* MatrixTD_mainloop(void *_game)
     struct MatrixTD *game = (struct MatrixTD*) _game;
     //printf("Test\n");
 
-    SDL_SetRenderDrawColor(game->renderer, 255, 0, 0, 255);
-
     //printf("Test2\n");
-
-    SDL_RenderClear(game->renderer);
+    
+    MatrixTD_draw(game);
 
     //printf("Test3\n");
-
-    SDL_RenderPresent(game->renderer);
 
     //printf("Test4\n");
 
@@ -107,6 +103,51 @@ void* MatrixTD_mainloop(void *_game)
     game->quit = 1;
 
     return NULL;
+}
+
+void MatrixTD_draw(struct MatrixTD *game)
+{
+    SDL_SetRenderDrawColor(game->renderer, 255, 0, 0, 255);
+    SDL_RenderClear(game->renderer);
+
+    //SDL_SetRenderDrawColor(game->renderer, 0, 255, 0, 255);
+    //SDL_RenderDrawLine(game->renderer, 40, 40, 180, 300);
+
+    SDL_Rect rect;
+    struct MapEntity ent;
+
+    //Draw Map
+    float tilesize = 30; //If non-integer, integer round-down will cause rendering error. Looks like grid of background color
+    for (uint8_t x = 0; x < game->map->xsize; x++)
+	for (uint8_t y = 0; y < game->map->ysize; y++)
+	{
+	    ent = game->map->grid[x][y];
+	    rect.x = tilesize * x;
+	    rect.y = tilesize * y;
+	    rect.h = tilesize;
+	    rect.w = tilesize;
+	    switch(ent.type)
+	    {
+	    case EmptyMapEntity:
+		SDL_SetRenderDrawColor(game->renderer, 200, 200, 200, 255);
+		break;
+		
+	    case RoadMapEntity:
+		SDL_SetRenderDrawColor(game->renderer, 128, 128, 128, 255);
+		break;
+
+	    case TowerMapEntity:
+		SDL_SetRenderDrawColor(game->renderer, 0, 0, 255, 255);
+		break;
+		
+	    default:
+		SDL_SetRenderDrawColor(game->renderer, 0, 0, 0, 255);
+	    }
+
+	    SDL_RenderFillRect(game->renderer, &rect);
+	}
+
+    SDL_RenderPresent(game->renderer);
 }
 
 uint8_t MatrixTD_isOpen(struct MatrixTD* game)
