@@ -7,7 +7,7 @@
 
 struct MatrixTD* MatrixTD_create()
 {
-///*
+/*
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
 	printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
@@ -19,34 +19,9 @@ struct MatrixTD* MatrixTD_create()
     
     struct MatrixTD *newMatrixTD = malloc(sizeof (struct MatrixTD));
 
-    newMatrixTD->window = SDL_CreateWindow("Matrix TD 0.1", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 500, 500, 0);
-
-    if (newMatrixTD->window == NULL)
-    {
-	printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
-	return NULL;
-    }
-    else
-    {
-	printf("Window created\n");
-    }
-
-    //This produces a side-effect that makes rendering with the SDL_Renderer not work
-    //newMatrixTD->screenSurface = SDL_GetWindowSurface(newMatrixTD->window);
-
-    newMatrixTD->renderer = SDL_CreateRenderer(newMatrixTD->window, -1, 0);
-
-    newMatrixTD->quit = 0;
-
-    newMatrixTD->map = MatrixTDMap_create("Test map");
-
-    if (newMatrixTD->map == NULL)
-    {
-	printf("Could not create map. Fatal!\n");
-	return NULL;
-    }
+    newMatrixTD->status = StatusUnknown;
     
-/*
+///*
     if(pthread_create(&newMatrixTD->mainloop_thread, NULL, MatrixTD_mainloop, newMatrixTD))
     {
 	printf("Failed to create thread!\n");
@@ -57,9 +32,15 @@ struct MatrixTD* MatrixTD_create()
     }
 //*/
 
-    MatrixTD_mainloop(newMatrixTD);
+//    MatrixTD_mainloop(newMatrixTD);
 
-    return newMatrixTD;
+    while(newMatrixTD->status != StatusUnknown)
+	;
+
+    if (newMatrixTD->status == StatusFailed)
+	return NULL;
+    else
+	return newMatrixTD;
 }
 
 void MatrixTD_destroy(struct MatrixTD *game)
@@ -75,34 +56,107 @@ void MatrixTD_destroy(struct MatrixTD *game)
 
 void* MatrixTD_mainloop(void *_game)
 {
-/*
+    struct MatrixTD *game = (struct MatrixTD*) _game;
+
+    uint8_t succes = MatrixTD_init(game);
+    
+    if (succes == 1)
+	game->status = StatusSucces;
+    else
+	game->status = StatusFailed;
+    
+    SDL_Event e;
+
+    while (!game->quit)
+    {
+	MatrixTD_draw(game);
+	while(SDL_PollEvent(&e) != 0 && (!game->quit))
+	{
+	    switch (e.type)
+	    {
+	    case SDL_QUIT:
+		game->quit = 1;
+		break;
+
+	    case SDL_KEYDOWN:
+		if (e.key.keysym.sym == SDLK_ESCAPE)
+		{
+		    printf("ESC pressed\n");
+		    game->quit = 1;
+		}
+		break;
+
+	    case SDL_MOUSEBUTTONDOWN:
+		if (e.button.button == SDL_BUTTON_LEFT)
+		{
+		    printf("Mouse click at (%d, %d)\n", e.button.x, e.button.y);
+		}
+		break;
+
+	    case SDL_MOUSEMOTION:
+		game->mousex = e.motion.x;
+		game->mousey = e.motion.y;
+		//printf("Mouse at (%d, %d)\n", game->mousex, game->mousey);
+		break;
+
+	    default:
+		printf(",");
+		fflush(stdout);
+	    }
+	}
+	SDL_Delay(100);
+    }
+
+    MatrixTD_destroy(game);
+
+    return NULL;
+}
+
+uint8_t MatrixTD_init(struct MatrixTD *game)
+{
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
 	printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
-	return NULL;
+	return 0;
     }
     else
 	printf("SDL initialized\n");
-//*/
 
-    struct MatrixTD *game = (struct MatrixTD*) _game;
-    //printf("Test\n");
+    game->window = SDL_CreateWindow("Matrix TD 0.1", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 500, 500, 0);
 
-    //printf("Test2\n");
-    
-    MatrixTD_draw(game);
+    if (game->window == NULL)
+    {
+	printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
+	return 0;
+    }
+    else
+    {
+	printf("Window created\n");
+    }
 
-    //printf("Test3\n");
+    if (SDL_SetWindowFullscreen(game->window, SDL_WINDOW_FULLSCREEN_DESKTOP))
+    {
+	printf("Could not go fullscreen!\n");
+    }
+    else
+    {
+	printf("Went fullscreen\n");
+    }
 
-    //printf("Test4\n");
+    //Check for failure?
+    game->renderer = SDL_CreateRenderer(game->window, -1, 0);
 
-    //SDL_UpdateWindowSurface(game->window); // This segfaults if in another thread // And is not needed I guess
+    game->quit = 0;
 
-    SDL_Delay(2000);
+    game->map = MatrixTDMap_create("Test map");
 
-    game->quit = 1;
+    if (game->map == NULL)
+    {
+	printf("Could not create map. Fatal!\n");
+	return 0;
+    }
 
-    return NULL;
+    return 1;
 }
 
 void MatrixTD_draw(struct MatrixTD *game)
@@ -115,9 +169,17 @@ void MatrixTD_draw(struct MatrixTD *game)
 
     SDL_Rect rect;
     struct MapEntity ent;
+    int w;
+    int h;
+    SDL_GetRendererOutputSize(game->renderer, &w, &h);
+    int tilesize; //If non-integer, integer round-down will cause rendering error. Looks like grid of background color
+
+    if (w/game->map->xsize < h/game->map->ysize)
+	tilesize = w/game->map->xsize; 
+    else
+	tilesize = h/game->map->ysize;
 
     //Draw Map
-    float tilesize = 30; //If non-integer, integer round-down will cause rendering error. Looks like grid of background color
     for (uint8_t x = 0; x < game->map->xsize; x++)
 	for (uint8_t y = 0; y < game->map->ysize; y++)
 	{

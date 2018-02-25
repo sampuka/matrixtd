@@ -16,11 +16,10 @@ int main()
 		
     while(MatrixTD_isOpen(game)) // This is if I get it to work with threading
     {
-	SDL_Delay(100);
+	SDL_Delay(200);
 	printf(".");
+	fflush(stdout);
     }
-
-    MatrixTD_destroy(game);
     
     return 0;
 }

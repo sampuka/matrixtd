@@ -7,7 +7,7 @@
 
 struct MatrixTDMap
 {
-    char mapName[50]; //Fuck your RAM I'll use all the memory I want
+    char mapName[100]; //Fuck your RAM I'll use all the memory I want
     struct MapEntity **grid; //2D grid of map entities, empty space, tower etc. Size dependent on map and is not predetermined.
     uint8_t xsize;
     uint8_t ysize;
