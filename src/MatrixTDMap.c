@@ -21,11 +21,11 @@ struct MatrixTDMap* MatrixTDMap_create(char *_mapName)
 	for(uint8_t x = 0; x < newmap->xsize; x++)
 	    newmap->grid[x] = malloc(sizeof (struct MatrixTDMap) * newmap->ysize);
 
-
 	printf("mapsize %ux%u\n", newmap->xsize, newmap->ysize);
 
 	//Setup map's tiles
 	for(uint8_t x = 0; x < newmap->xsize; x++)
+	{
 	    for(uint8_t y = 0; y < newmap->ysize; y++)
 	    {
 		//printf("(%u,%u)\n", x, y);
@@ -47,7 +47,12 @@ struct MatrixTDMap* MatrixTDMap_create(char *_mapName)
 		    newmap->grid[x][y].type = EmptyMapEntity;
 		}
 	    }
-
+	}
+	
+	newmap->wavecounter = 0;
+	newmap->enemylist = NULL;
+	newmap->enemies_to_spawn = 0;
+	newmap->next_wave_time = 1;
     }
     else
     {
