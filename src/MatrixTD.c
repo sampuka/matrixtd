@@ -1,22 +1,10 @@
 #include "MatrixTD.h"
 
-#include <SDL.h>
-
 #include <stdlib.h>
 #include <stdio.h>
 
 struct MatrixTD* MatrixTD_create()
-{
-/*
-    if (SDL_Init(SDL_INIT_VIDEO) < 0)
-    {
-	printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
-	return NULL;
-    }
-    else
-	printf("SDL initialized\n");
-//*/
-    
+{   
     struct MatrixTD *newMatrixTD = malloc(sizeof (struct MatrixTD));
 
     newMatrixTD->status = StatusUnknown;
@@ -60,16 +48,28 @@ void* MatrixTD_mainloop(void *_game)
 
     uint8_t succes = MatrixTD_init(game);
     
-    if (succes == 1)
+    if (succes == 1) //The thread that created this is reading on game->status // Maybe should also be set in _init
 	game->status = StatusSucces;
     else
 	game->status = StatusFailed;
     
     SDL_Event e;
+    uint32_t last_frame_timestamp = SDL_GetTicks();
+    uint32_t current_timestamp;
+    int32_t time_to_next_frame;
 
     while (!game->quit)
     {
-	MatrixTD_draw(game);
+	current_timestamp = SDL_GetTicks();
+	time_to_next_frame = (last_frame_timestamp + 1000/game->fps_cap) - current_timestamp; 
+	//printf("Current timestamp = %u\nLast timestamp = %u\nTime for next frame %d.\n", current_timestamp, last_frame_timestamp, time_to_next_frame);
+	if (time_to_next_frame > 0)
+	{
+	    SDL_Delay(time_to_next_frame);
+	current_timestamp = SDL_GetTicks(); //Inclusion of this makes time calculations work but feels hacky
+	}
+	
+	//Handle input
 	while(SDL_PollEvent(&e) != 0 && (!game->quit))
 	{
 	    switch (e.type)
@@ -101,10 +101,17 @@ void* MatrixTD_mainloop(void *_game)
 
 	    default:
 		printf(",");
-		fflush(stdout);
 	    }
 	}
-	SDL_Delay(100);
+	fflush(stdout);
+
+	//Update state
+	MatrixTDMap_update(game->map, current_timestamp - last_frame_timestamp);
+
+	//Draw to screen
+	MatrixTD_draw(game);
+
+	last_frame_timestamp = current_timestamp;
     }
 
     MatrixTD_destroy(game);
@@ -121,6 +128,13 @@ uint8_t MatrixTD_init(struct MatrixTD *game)
     }
     else
 	printf("SDL initialized\n");
+
+    //Initialize TTF
+    if (TTF_Init() == -1)
+    {
+	printf("SDL_ttf could not initialize! SDL_ttf error: %s\n", TTF_GetError());
+	return 0;
+    }
 
     game->window = SDL_CreateWindow("Matrix TD 0.1", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 500, 500, 0);
 
@@ -145,6 +159,14 @@ uint8_t MatrixTD_init(struct MatrixTD *game)
 
     //Check for failure?
     game->renderer = SDL_CreateRenderer(game->window, -1, 0);
+
+    game->fps_cap = 100;
+
+    game->font = TTF_OpenFont("Cabin-Regular.ttf", 40);
+    if (game->font == NULL)
+    {
+	printf("Failed to load font! SDL_ttf error: %s\n", TTF_GetError());
+    }
 
     game->quit = 0;
 
@@ -208,6 +230,22 @@ void MatrixTD_draw(struct MatrixTD *game)
 
 	    SDL_RenderFillRect(game->renderer, &rect);
 	}
+
+    //Draw ticks in corner
+    SDL_Color textcolor = {255, 255, 255, 0};
+    char ticks_str[50];
+    sprintf(ticks_str, "ticks = %u", game->map->ticks);
+    SDL_Surface *ticks_surface = TTF_RenderText_Solid(game->font, ticks_str, textcolor);
+    SDL_Texture *ticks_texture = SDL_CreateTextureFromSurface(game->renderer, ticks_surface);
+
+    SDL_Rect ticks_rect;
+    ticks_rect.x = 5;
+    ticks_rect.y = 5;
+    TTF_SizeText(game->font, ticks_str, &ticks_rect.w, &ticks_rect.h);
+    //ticks_rect.w = 50;
+    //ticks_rect.h = 10;
+
+    SDL_RenderCopy(game->renderer, ticks_texture, NULL, &ticks_rect);
 
     SDL_RenderPresent(game->renderer);
 }

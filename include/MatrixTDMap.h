@@ -4,6 +4,8 @@
 #include "MapEntity.h"
 #include "mlist.h"
 
+#include <SDL.h>
+
 #include <inttypes.h>
 
 struct MatrixTDMap
@@ -16,7 +18,7 @@ struct MatrixTDMap
     uint16_t wavecounter; //The lastest wave that has begun spawning
     mlist enemylist; //Linked list of the enemies that are spawned and alive
     uint16_t enemies_to_spawn; //Amount of enemies to spawn this wave still
-    uint32_t tick; //The amount of unpaused ticks passed
+    uint32_t ticks; //The amount of unpaused ticks passed
     uint8_t paused; //bool value indicating if ticks get increased
     uint32_t next_wave_time; //The tick-value for next wave to spawn
 };
@@ -24,5 +26,9 @@ struct MatrixTDMap
 struct MatrixTDMap* MatrixTDMap_create(char *mapName);
 
 void MatrixTDMap_destroy(struct MatrixTDMap *map);
+
+void MatrixTDMap_event(struct MatrixTDMap *map, union SDL_Event e);
+
+void MatrixTDMap_update(struct MatrixTDMap *map, uint32_t ticks);
 
 #endif

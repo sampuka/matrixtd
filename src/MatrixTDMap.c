@@ -52,6 +52,8 @@ struct MatrixTDMap* MatrixTDMap_create(char *_mapName)
 	newmap->wavecounter = 0;
 	newmap->enemylist = NULL;
 	newmap->enemies_to_spawn = 0;
+	newmap->ticks = 0;
+	newmap->paused = 0;
 	newmap->next_wave_time = 1;
     }
     else
@@ -69,5 +71,18 @@ void MatrixTDMap_destroy(struct MatrixTDMap* map)
 	free(map->grid[x]);
     free(map->grid);
 
+    //enemylist not freed!!!!!!
+
     free(map);
+}
+
+void MatrixTDMap_event(struct MatrixTDMap *map, union SDL_Event e)
+{
+}
+
+void MatrixTDMap_update(struct MatrixTDMap *map, uint32_t ticks)
+{
+    if(map->paused)
+	return;
+    map->ticks += ticks;
 }

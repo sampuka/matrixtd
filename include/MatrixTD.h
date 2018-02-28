@@ -4,6 +4,7 @@
 #include "MatrixTDMap.h"
 
 #include <SDL.h>
+#include <SDL_ttf.h>
 
 #include <pthread.h>
 #include <inttypes.h>
@@ -21,6 +22,8 @@ struct MatrixTD
     uint16_t mousex;
     uint16_t mousey;
     SDL_Renderer* renderer;
+    uint32_t fps_cap;
+    TTF_Font *font;
     uint8_t quit;
     struct MatrixTDMap* map;
     pthread_t mainloop_thread;
